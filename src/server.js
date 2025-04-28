@@ -13,34 +13,36 @@ const app = express();
 const httpServer = createServer(app);
 const io = new SocketIO(httpServer, {
   cors: {
-    origin: "http://localhost:8080", // 개발용, 필요 시 '*'로 변경 가능
-    methods: ["GET", "POST"]
-  }
+    origin: "http://localhost:8080", // 클라이언트 주소
+    methods: ["GET", "POST"],
+  },
 });
-
-// 뷰 엔진 및 정적 파일 설정
-app.set("view engine", "pug");
-app.set("views", path.join(__dirname, "views"));
-app.use("/public", express.static(path.join(__dirname, "public")));
-
-// 라우팅
 
 // 소켓 통신
 io.on("connection", (socket) => {
-  console.log("✅ 클라이언트 연결됨");
-
-  // 프레임 수신 시 전체 클라이언트에 브로드캐스트
-  socket.on("frame", (data) => {
-    io.emit("frame", data);
+  socket.on("connection", (idCid) => {
+    socket.join(idCid);
+    socket.to(idCid).emit("connected");
   });
-});
 
-io.on("disconnect", (socket) => {
-  console.log("✅ 클라이언트 연결해제");
+  // 영상 전송
+  socket.on("videoCall", (idCid) => {
+    socket.to(idCid).emit("videoCall");
+  });
+
+  socket.on("frame", (data) => {
+    const idCid = data.idCid;   // 객체 안에서 꺼내야 함
+    const frame = data.frame;
+    socket.to(idCid).emit("frame", frame);  // frame만 전달
+});
+  socket.on("stopVideo", (idCid => {
+    console.log("STOP!")
+    socket.to(idCid).emit("stopVideo")
+  }))
 });
 
 // 서버 시작
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
-  console.log(`🚀 서버 실행 중: http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
