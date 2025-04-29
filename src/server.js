@@ -14,7 +14,7 @@ const httpServer = createServer(app);
 const io = new SocketIO(httpServer, {
   cors: {
     origin: "http://localhost:8080", // 클라이언트 주소
-    methods: ["GET", "POST"],
+    credentials: true
   },
 });
 
