@@ -20,25 +20,38 @@ const io = new SocketIO(httpServer, {
 
 // 소켓 통신
 io.on("connection", (socket) => {
-  socket.on("connection", (idCid) => {
-    socket.join(idCid);
-    socket.to(idCid).emit("connected");
+  socket.on("connection", (sessionInfo) => {
+    const room = sessionInfo.sessionId + sessionInfo.idCid
+    socket.join(room);
+    console.log("sessionId:" +  sessionInfo.sessionId);
+    console.log("idCid:" + sessionInfo.idCid);
+    console.log("Room info:" + room);
+    io.emit("connection", sessionInfo.sessionId)
   });
-
   // 영상 전송
-  socket.on("videoCall", (idCid) => {
-    socket.to(idCid).emit("videoCall");
+  socket.on("videoCall", (room) => {
+    socket.to(room).emit("videoCall", room);
   });
 
   socket.on("frame", (data) => {
-    const idCid = data.idCid;   // 객체 안에서 꺼내야 함
-    const frame = data.frame;
-    socket.to(idCid).emit("frame", frame);  // frame만 전달
-});
-  socket.on("stopVideo", (idCid => {
-    console.log("STOP!")
-    socket.to(idCid).emit("stopVideo")
-  }))
+    socket.to(data.room_id).emit("frame", data.data);
+  });
+  socket.on("stopVideo", (room) => {
+    console.log("STOP!");
+    socket.to(room).emit("stopVideo", room);
+  })
+  socket.on("object_detected", jsonStr => {
+    const data = JSON.parse(jsonStr);  // 문자열을 객체로 변환
+    console.log("room : " + data.room);
+    console.log("class : " + data.cls);
+    console.log("id:" + data.id);
+    io.to(data.room).emit("detection",data.cls);
+  });  
+  socket.on("connectionSuccess", data => {
+    socket.join(data)
+    console.log("connection Success! sessionInfo From pyhton:" + data)
+    socket.to(data).emit("successMessage","연결성공");
+  })
 });
 
 // 서버 시작
