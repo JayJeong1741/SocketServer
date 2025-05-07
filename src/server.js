@@ -1,7 +1,6 @@
 import express from "express";
 import { createServer } from "http";
 import { Server as SocketIO } from "socket.io";
-import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -28,6 +27,12 @@ io.on("connection", (socket) => {
     console.log("Room info:" + room);
     io.emit("connection", sessionInfo.sessionId)
   });
+
+  socket.on("connectionForAlarm", (cid) => {
+    console.log("cid: " + cid);
+    socket.join(cid);
+  });
+
   // 영상 전송
   socket.on("videoCall", (room) => {
     socket.to(room).emit("videoCall", room);
@@ -42,10 +47,9 @@ io.on("connection", (socket) => {
   })
   socket.on("object_detected", jsonStr => {
     const data = JSON.parse(jsonStr);  // 문자열을 객체로 변환
-    console.log("room : " + data.room);
     console.log("class : " + data.cls);
-    console.log("id:" + data.id);
-    io.to(data.room).emit("detection",data.cls);
+    console.log("id:" + data.cid);
+    io.to(data.cid).emit("detection",data.cls);
   });  
   socket.on("connectionSuccess", data => {
     socket.join(data)
