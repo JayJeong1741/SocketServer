@@ -20,12 +20,12 @@ const io = new SocketIO(httpServer, {
 // 소켓 통신
 io.on("connection", (socket) => {
   socket.on("connection", (sessionInfo) => {
-    const room = sessionInfo.sessionId + sessionInfo.idCid
+    const room = sessionInfo.socketId + sessionInfo.idCid
     socket.join(room);
-    console.log("sessionId:" +  sessionInfo.sessionId);
+    console.log("sessionId:" +  sessionInfo.socketId);
     console.log("idCid:" + sessionInfo.idCid);
     console.log("Room info:" + room);
-    io.emit("connection", sessionInfo.sessionId)
+    io.emit("connection", sessionInfo.socketId)
   });
 
   socket.on("connectionForAlarm", (cid) => {
@@ -45,12 +45,18 @@ io.on("connection", (socket) => {
     console.log("STOP!");
     socket.to(room).emit("stopVideo", room);
   })
-  socket.on("object_detected", jsonStr => {
+  socket.on("emergency_detected", jsonStr => {
     const data = JSON.parse(jsonStr);  // 문자열을 객체로 변환
     console.log("class : " + data.cls);
     console.log("id:" + data.cid);
-    io.to(data.cid).emit("detection",data.cls);
+    io.to(data.cid).emit("detection",data);
   });  
+
+  socket.on("traffic", (jsonStr) => {
+    const data = JSON.parse(jsonStr)
+    console.log("traffic from python" + data.cid)
+    io.to(data.cid).emit("traffic", jsonStr);
+  });
   socket.on("connectionSuccess", data => {
     socket.join(data)
     console.log("connection Success! sessionInfo From pyhton:" + data)
