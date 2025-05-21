@@ -12,7 +12,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new SocketIO(httpServer, {
   cors: {
-    origin: "http://localhost:8080", // 클라이언트 주소
+    origin: "http://118.218.212.147:59727", // 클라이언트 주소
     credentials: true
   },
 });
